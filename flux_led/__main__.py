@@ -831,10 +831,10 @@ class WifiLedBulb():
         # Assume output temperature of between 2700 and 6500 Kelvin, and scale
         # the warm and cold LEDs linearly to provide that
         temperature = max(temperature-2700, 0)
-        warm = 255 * (1 - (temperature/3800))
-        cold = min(255 * temperature/3800, 255)
-        warm *= brightness/255
-        cold *= brightness/255
+        warm = int(min(255 * float(temperature)/3800, 255))
+        cold = int(255 * (1 - (float(temperature)/3800)))
+        warm *= float(brightness)/255
+        cold *= float(brightness)/255
         self.setRgbw(w=warm, w2=cold, persist=persist, retry=retry)
 
     def getRgbw(self):
@@ -1315,6 +1315,7 @@ Mode Details:
     color:      turns on the light with specified color
     preset:     turns on the light with specified preset and speed
     warmwhite:  turns on the light with warm white at specified brightness
+	whitetemp:  turns on the light with a specific white temperature at specified brightness
 
 Settings available for each mode:
     Timer Mode | Settings
@@ -1594,6 +1595,9 @@ def parseArgs():
     mode_group.add_option("", "--coldwhite", dest="cw", default=None,
                   help="Set cold white mode (LEVELCW is percent)",
                   metavar='LEVELCW', type="int")
+    mode_group.add_option("-k", "--whitetemp", dest="wt", default=None,
+                  help="Set temperature color (temp is kelvin)",
+                  metavar='TEMPERATURE', type="int", nargs=2)
     mode_group.add_option("-p", "--preset", dest="preset", default=None,
                   help="Set preset pattern mode (SPEED is percent)",
                   metavar='CODE SPEED', type="int", nargs=2)
@@ -1668,6 +1672,7 @@ def parseArgs():
     mode_count = 0
     if options.color:  mode_count += 1
     if options.ww:     mode_count += 1
+    if options.wt:     mode_count += 1
     if options.cw:     mode_count += 1
     if options.preset: mode_count += 1
     if options.custom: mode_count += 1
@@ -1767,6 +1772,10 @@ def main():
         if options.cw is not None:
             print("Setting cold white mode, level: {}%".format(options.cw))
             bulb.setColdWhite(options.cw, not options.volatile)
+
+	if options.wt is not None:
+            print("Setting white temp, kelvin: {} (kelvin, brightness)".format(options.wt))
+            bulb.setWhiteTemperature(options.wt[0],options.wt[1], not options.volatile)
 
         if options.color is not None:
             print("Setting color RGB:{}".format(options.color),)
